@@ -7,21 +7,54 @@ import { Input } from "./components/ui/input";
 function App() {
   const [items, setItems] = useState<string[]>([]);
   const [newItem, setNewItem] = useState("");
+  const [errMsg, setErrMsg] = useState<string>();
 
   function addItem() {
     // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
-    invoke<string[]>("add_item", { newItem })
-      .then((items) => setItems(items))
-      .catch((error) => setItems([error.toString()]));
+    invoke<string>("add_item", { newItem })
+      .then((items) => items.length && setItems(items.split(",")))
+      .then(() => setNewItem(""))
+      .catch((error) => setErrMsg(error.toString()));
+  }
+
+  function clearItems() {
+    invoke<string>("clear_items")
+      .then(() => setItems([]))
+      .catch((error) => setErrMsg(error.toString()));
+  }
+
+  function getItems() {
+    invoke<string[]>("get_items")
+      .then((items) => items.length && setItems(items))
+      .catch((error) => setErrMsg(error.toString()));
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen">
-      <div className="flex flex-row gap-1">
-        <Input value={newItem} onChange={(e) => setNewItem(e.target.value)} />
-        <Button onClick={addItem}>Add item</Button>
+    <div className="flex flex-col items-center min-h-screen m-10 gap-3">
+      <Input value={newItem} onChange={(e) => setNewItem(e.target.value)} />
+      <div className="flex flex-row gap-2">
+        <Button onClick={addItem} disabled={!newItem.length}>
+          Add
+        </Button>
+        <Button onClick={getItems} className="bg-blue-700">
+          Get
+        </Button>
+        <Button onClick={clearItems} className="bg-red-500">
+          Clear
+        </Button>
       </div>
-      <p>{items}</p>
+      {errMsg ? (
+        <p className="text-red-500">{errMsg}</p>
+      ) : (
+        <div className="justify-start">
+          {items.map((item, index) => (
+            <p key={index}>
+              {"\u2022"}
+              {item}
+            </p>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
