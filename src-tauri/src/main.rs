@@ -22,7 +22,8 @@ fn read_csv_into_vec() -> Result<Vec<String>, io::Error> {
     if f_str.is_empty() {
         return Ok(Vec::new());
     }
-    Ok(f_str.split(",").map(|s| s.to_string()).collect())
+    let f_vec = f_str.split(",").map(|s| s.to_string()).collect();
+    Ok(f_vec)
 }
 
 fn write_vec_to_file(items: Vec<String>) -> Result<(), io::Error> {
