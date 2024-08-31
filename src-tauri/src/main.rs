@@ -6,59 +6,63 @@ use std::io::{self, Write};
 
 const FILE_NAME: &str = "../todos.txt";
 
-fn file_writer(contents: &str) -> Result<(), io::Error> {
+fn write_to_file(contents: &str) -> Result<(), io::Error> {
+    let contents = contents.as_bytes();
     let mut file = OpenOptions::new().write(true).truncate(true).create(true).open(FILE_NAME)?;
-    file.write_all(contents.as_bytes())?;
+    file.write_all(contents)?;
     Ok(())
 }
 
-fn get_file_contents() -> Result<String, io::Error> {
+fn read_file_as_string() -> Result<String, io::Error> {
     fs::read_to_string(FILE_NAME)
+}
+
+fn read_csv_into_vec() -> Result<Vec<String>, io::Error> {
+    let f_str = read_file_as_string()?;
+    if f_str.is_empty() {
+        return Ok(Vec::new());
+    }
+    Ok(f_str.split(",").map(|s| s.to_string()).collect())
+}
+
+fn write_vec_to_file(items: Vec<String>) -> Result<(), io::Error> {
+    let contents = items.join(",");
+    write_to_file(&contents)
 }
 
 #[tauri::command]
 fn get_items() -> Result<Vec<String>, String> {
-    get_file_contents()
-        .map(|contents| contents.split(',').map(String::from).collect())
+    read_csv_into_vec()
         .map_err(|e| e.to_string())
 }
 
 #[tauri::command]
-fn add_item(new_item: &str) -> Result<String, String> {
-    match (|| -> Result<String, io::Error> {
+fn add_item(new_item: &str) -> Result<Vec<String>, String> {
+    match (|| -> Result<Vec<String>, io::Error> {
         // Read the contents of the file
-        let mut contents = get_file_contents()?;
-
-        // Split the contents by commas to get the list of items
-        let mut items: Vec<&str> = contents.split(',').collect();
+        let mut contents = read_csv_into_vec()?;
         
         // Append the new item to the list
         let _ = new_item.trim();
         if new_item.is_empty() {
             return Ok(contents);
         }
-        items.push(new_item);
+        contents.push(new_item.into());
         
-        // Join the list back into a comma-separated string
-        if !items.is_empty() {
-            contents = items.join(",");
-        }
-        
-        // Write the updated string back to the file
-        file_writer(&contents)?;
+        // Write the new contents back to the file
+        write_vec_to_file(contents.clone())?;
         
         Ok(contents)
     })() {
-        Ok(contents) => Ok(contents.into()),
+        Ok(contents) => Ok(contents),
         Err(e) => Err(e.to_string()),
     }
 }
 
 #[tauri::command]
 fn clear_items() -> Result<(), String> {
-    file_writer("")
+    write_to_file("")
         .map_err(|e| e.to_string())
-        .map(|_| ())
 }
 
 fn main() {

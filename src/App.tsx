@@ -11,21 +11,23 @@ function App() {
 
   function addItem() {
     // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
-    invoke<string>("add_item", { newItem })
-      .then((items) => items.length && setItems(items.split(",")))
+    invoke<string[]>("add_item", { newItem })
+      .then(setItems)
       .then(() => setNewItem(""))
       .catch((error) => setErrMsg(error.toString()));
   }
 
   function clearItems() {
-    invoke<string>("clear_items")
+    invoke("clear_items")
       .then(() => setItems([]))
+      .then(() => setNewItem(""))
+      .then(() => setErrMsg(""))
       .catch((error) => setErrMsg(error.toString()));
   }
 
   function getItems() {
     invoke<string[]>("get_items")
-      .then((items) => items.length && setItems(items))
+      .then(setItems)
       .catch((error) => setErrMsg(error.toString()));
   }
 
