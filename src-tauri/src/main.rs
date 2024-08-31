@@ -4,7 +4,7 @@
 use std::fs::{self, OpenOptions};
 use std::io::{self, Write};
 
-const FILE_NAME: &str = "todos.txt";
+const FILE_NAME: &str = "../todos.txt";
 
 fn file_writer(contents: &str) -> Result<(), io::Error> {
     let mut file = OpenOptions::new().write(true).truncate(true).create(true).open(FILE_NAME)?;
